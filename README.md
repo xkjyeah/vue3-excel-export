@@ -83,6 +83,7 @@ So, instead of using something as imprecise as HTML, we use JSON (and allow date
 
 ```js
 const dataset = ref([
+  /* ID and country are fields in the dataset not sent to the presentation layer */
   {id: 10, name: 'Michael', birthday: new Date(1990, 1, 1), country: 'US'},
   {id: 20, name: 'David', birthday: new Date(1990, 6, 5), country: 'SG'},
 ])
