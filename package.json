@@ -1,0 +1,23 @@
+{
+  "name": "vue3-excel-export",
+  "version": "0.0.1",
+  "description": "Export a datasheet from Vue to Excel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xkjyeah/vue3-excel-export.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xkjyeah/vue3-excel-export/issues"
+  },
+  "homepage": "https://github.com/xkjyeah/vue3-excel-export#readme",
+  "dependencies": {
+    "vue": "^3.5.13",
+    "xlsx": "^0.18.5"
+  }
+}
