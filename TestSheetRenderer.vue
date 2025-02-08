@@ -14,14 +14,14 @@
       <row v-for="e in employees" :key="e.id" :widthSetting="true">
         <text>{{ e.id }}</text>
         <text>{{ e.name }}</text>
-        <date width="11">{{ e.dateJoined }}</date>
+        <date width="11" z="DD MMM YYYY">{{ e.dateJoined }}</date>
         <number z="#,##0.0">{{ e.yoeHire }}</number>
         <formula>
           <rc c="-1" /> + (now() - <rc c="-2" />) / 365
         </formula>
         <boolean>{{ e.isManager }}</boolean>
-        <date width="20">{{ e.created }}</date>
-        <date width="20">{{ e.created }}</date>
+        <date width="20" z="YYYY-MM-DD HH:MM:SS">{{ e.created }}</date>
+        <date width="20" z="YYYY-MM-DD HH:MM:SS">{{ e.created }}</date>
       </row>
     </template>
     <template v-slot:default="output">

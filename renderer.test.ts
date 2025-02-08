@@ -28,8 +28,8 @@ test('renders the expected Sheet object', async () => {
     "B2": { "t": "s", "v": "Matthew" },
     "B3": { "t": "s", "v": "Julius" },
     "C1": { "t": "s", "v": "Date Joined" },
-    "C2": { "t": "n", "v": 44713, "z": "YYYY-MM-DD" },
-    "C3": { "t": "n", "v": 45356, "z": "YYYY-MM-DD" },
+    "C2": { "t": "n", "v": 44713, "z": "DD MMM YYYY" },
+    "C3": { "t": "n", "v": 45356, "z": "DD MMM YYYY" },
     "D1": { "t": "s", "v": "YoE at Hire" },
     "D2": { "t": "n", "v": 5.5, "z": "#,##0.0" },
     "D3": { "t": "n", "v": 3, "z": "#,##0.0" },
@@ -40,10 +40,10 @@ test('renders the expected Sheet object', async () => {
     "F2": { "t": "b", "v": false },
     "F3": { "t": "b", "v": true },
     "G1": { "t": "s", "v": "Created" },
-    "G2": { "t": "n", "v": 44711.67303240741, "z": "YYYY-MM-DD" },
-    "G3": { "t": "n", "v": 45352.29803240741, "z": "YYYY-MM-DD" },
+    "G2": { "t": "n", "v": 44711.67303240741, "z": "YYYY-MM-DD HH:MM:SS" },
+    "G3": { "t": "n", "v": 45352.29803240741, "z": "YYYY-MM-DD HH:MM:SS" },
     "H1": { "t": "s", "v": "Updated" },
-    "H2": { "t": "n", "v": 44711.67303240741, "z": "YYYY-MM-DD" },
-    "H3": { "t": "n", "v": 45352.29803240741, "z": "YYYY-MM-DD" }
+    "H2": { "t": "n", "v": 44711.67303240741, "z": "YYYY-MM-DD HH:MM:SS" },
+    "H3": { "t": "n", "v": 45352.29803240741, "z": "YYYY-MM-DD HH:MM:SS" }
   })
 })
