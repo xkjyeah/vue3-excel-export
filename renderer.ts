@@ -26,10 +26,17 @@ class BaseElement implements BaseNode {
     this.type = type
   }
 
-  getText() {
-    return this.children.filter((x): x is TextNode => !(x instanceof BaseElement) && x.type === 'text-node')
-      .map(tn => tn.data.toString())
-      .join('')
+  getText(rIndex: number, cIndex: number) {
+    return this.children
+      .map((x: XlNode): string => {
+        if (!(x instanceof BaseElement) && x.type === 'text-node') {
+          return x.data.toString()
+        } else if (x instanceof CellRef) {
+          return x.getText(rIndex, cIndex)
+        } else {
+          return ''
+        }
+      }).join('')
   }
 }
 
@@ -40,10 +47,10 @@ export class TextCell extends BaseCell {
     super('text')
   }
 
-  data(): any {
+  data(rIndex: number, cIndex: number): any {
     return {
       t: 's',
-      v: this.getText()
+      v: this.getText(rIndex, cIndex)
     }
   }
 }
@@ -52,8 +59,8 @@ export class BooleanCell extends BaseCell {
     super('boolean')
   }
 
-  data(): any {
-    const t = this.getText()
+  data(rIndex: number, cIndex: number): any {
+    const t = this.getText(rIndex, cIndex)
 
     return (t !== '') ? {
       t: 'b',
@@ -66,8 +73,8 @@ export class NumberCell extends BaseCell {
     super('number')
   }
 
-  data(): any {
-    const t = this.getText()
+  data(rIndex: number, cIndex: number): any {
+    const t = this.getText(rIndex, cIndex)
 
     return (t !== '') ? {
       t: 'n',
@@ -81,8 +88,8 @@ export class DateCell extends BaseCell {
   }
 
 
-  data(): any {
-    const t = this.getText()
+  data(rIndex: number, cIndex: number): any {
+    const t = this.getText(rIndex, cIndex)
 
     if (t === '') {
       return null
@@ -112,9 +119,32 @@ export class SheetElement extends BaseElement {
     super('sheet')
   }
 }
-export class FormulaCell extends BaseElement {
+export class FormulaCell extends BaseCell {
   constructor() {
     super('formula')
+  }
+
+  data(rIndex: number, cIndex: number): any {
+    const t = this.getText(rIndex, cIndex)
+
+    return (t !== '') ? {
+      f: t
+    } : null
+  }
+}
+export class CellRef extends BaseElement {
+  constructor() {
+    super('formula')
+  }
+
+  getText(rIndex: number, cIndex: number): any {
+    const relR = this.attributes.r || "0"
+    const relC = this.attributes.c || "0"
+
+    const r = rIndex + parseInt(relR)
+    const c = cIndex + parseInt(relC)
+
+    return XLSXutils.encode_cell({ r, c })
   }
 }
 export type CommentNode = BaseNode & {
@@ -145,32 +175,47 @@ const isPresent = function <T extends Object>(t: T | undefined | null): t is T {
 
 const toData = (f: XlNode) => {
   const c = (f instanceof BaseElement) ? f.children : []
+  let rIndex = -1
 
-  const baseSheet = XLSXutils.aoa_to_sheet(c.map((row: XlNode, index: number) => {
+  const baseSheet = XLSXutils.aoa_to_sheet(c.map((row: XlNode) => {
     if (!(row instanceof RowElement)) {
       console.warn(`Unclear how to handle child of sheet. Skipping...`, row.type)
       return
     }
 
+    rIndex += 1
+
+    let cIndex = -1
+
     return row.children.map((maybeCellElem: XlNode) => {
+      if (maybeCellElem instanceof BaseCell) {
+        cIndex += 1
+      }
+
       if (maybeCellElem instanceof TextCell ||
         maybeCellElem instanceof BooleanCell ||
         maybeCellElem instanceof DateCell ||
         maybeCellElem instanceof NumberCell
       ) {
         const format = maybeCellElem.attributes['z']
-        const result = maybeCellElem.data()
+        const result = maybeCellElem.data(rIndex, cIndex)
 
         if (format && result) {
           result.z = format
         }
         return result
       } else if (maybeCellElem instanceof FormulaCell) {
-        // Mark it as blank for now...
-        // TODO: return {t: '??', f: '<formula>'} Cell object
-        // Note: it would be nice to allow it to reference cells in R1C1 format, but
-        // that's not supported by SheetJS now??
-        return null
+        const format = maybeCellElem.attributes['z']
+        const type = maybeCellElem.attributes['t']
+        const result = maybeCellElem.data(rIndex, cIndex)
+
+        if (format && result) {
+          result.z = format
+        }
+        if (type && result) {
+          result.t = format
+        }
+        return result
       }
     })
   }).filter(isPresent)
@@ -281,6 +326,8 @@ const { render, createApp } = createRenderer<XlNode, XlElement>({
         return new NumberCell()
       case 'formula':
         return new FormulaCell()
+      case 'rc':
+        return new CellRef()
       default:
         throw new Error(`Unsupported element type ${type}`)
     }
