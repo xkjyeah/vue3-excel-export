@@ -1,5 +1,97 @@
 # vue3-excel-export
 
+## Quick usage instructions
+
+```html
+<template>
+  <SheetJsOutput>
+    <!-- Define how we want the spreadsheet presented -->
+    <template v-slot:sheet>
+      <row>
+        <text>Initial</text>
+        <text>Name</text>
+        <text>Birthday</text>
+        <text>Age this year</text>
+        <text>Age this year (formula)</text>
+      </row>
+
+      <row v-for="row in dataset" :widthSetting="true">
+        <text width="2">{{ row['name'][0] }}</text>
+        <text>{{ row['name'] }}</text>
+        <date z="MMM DD" width="7">{{ row['birthday'] }}</date>
+        <number>{{ today.getUTCFullYear() - row['birthday'].getUTCFullYear() }}</number>
+        <formula>DATEDIF(<rc c="-2" />, NOW(), "Y")</formula>
+      </row>
+    </template>
+
+    <template v-slot:default="output">
+      <button @click="renderExcelAndDownload(output)">Download Excel</button>
+    </template>
+  </SheetJsOutput>
+</template>
+
+<script setup>
+import XLSX from 'xlsx'
+import SheetJsOutput from 'vue3-excel-export/SheetJsOutput'
+
+const today = new Date
+
+const dataset = [
+  { name: 'Alan', birthday: '1999-01-02' },
+  { name: 'Bob', birthday: '2000-03-04' },
+]
+
+function renderExcelAndDownload(arrayOfData) {
+  const worksheet = XLSX.utils.aoa_to_sheet(arrayOfData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  XLSX.writeFile(workbook, "Presidents.xlsx");
+}
+</script>
+```
+
+## Quick API documentation
+
+You will notice that these are **not custom elements** (custom elements have a hyphen in the name, or use PascalCase naming),
+This is illegal in HTML and non-idiomatic in Vue. However, this is intentional, since these elements
+are actually being rendered to a spreadsheet and never to the DOM. In fact, I used a custom renderer
+to implement SheetJsOutput.
+
+### `<row [:widthSetting=true|false]>`
+Inserts a new Excel row. If a row is width-setting, we will set the column widths in the sheet based on the
+widths of the cells in this row.
+
+### `<text [z=formatString] [width=n]>`, `<number [z=formatString] [width=n]>`, `<boolean [z=formatString] [width=n]>`
+Inserts a new cell of string, number or boolean type respectively. The *entire text content* will be interpreted as a string, number or boolean.
+Booleans are `true` only if the string evaluates to "true".
+
+`width=n` is honoured if the cell is specified inside a row that's `widthSetting=true`. Width is specified in [MDW units](https://docs.sheetjs.com/docs/csf/features/colprops#column-widths).
+
+### `<date [z=formatString] [width=n]>`
+Inserts a new cell of number type. The text contents of the cell are interpreted as a Javascript date (i.e. `new Date(textContents)`),
+and then converted to [Excel epoch](https://docs.sheetjs.com/docs/csf/features/dates), representing the number of days since 1899-12-30.
+
+### `<formula [z=formatString] [t=typeCode]>` `<rc [r=n] [c=n] />`
+Inserts a new cell with a formula, e.g. `<formula>A1 + B1</formula>`. Formula is specified in [A1 format](https://docs.sheetjs.com/docs/csf/general#a1-style).
+
+It would obviously be immensely helpful if we could use R1C1 format, but SheetJS doesn't support that :(
+
+Instead, you can use the `<rc>` tag to help:
+
+```html
+<row>
+  <number>Qty</number>
+  <number>Unit price</number>
+  <number>Price</number>
+</row>
+<row>
+  <number>{{ item.qty }}</number>
+  <number>{{ item.unitPrice }}</number>
+  <formula><rc c="-2" /> * <rc c="-1" /></formula>
+</row>
+```
+
 ## Motivation
 
 Often, you already have a dataset that you have rendered:
