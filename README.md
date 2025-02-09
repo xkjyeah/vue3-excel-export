@@ -19,13 +19,13 @@
         <text width="2">{{ row['name'][0] }}</text>
         <text>{{ row['name'] }}</text>
         <date z="MMM DD" width="7">{{ row['birthday'] }}</date>
-        <number>{{ today.getUTCFullYear() - row['birthday'].getUTCFullYear() }}</number>
+        <number>{{ today.getUTCFullYear() - new Date(row['birthday']).getUTCFullYear() }}</number>
         <formula>DATEDIF(<rc c="-2" />, NOW(), "Y")</formula>
       </row>
     </template>
 
-    <template v-slot:default="output">
-      <button @click="renderExcelAndDownload(output)">Download Excel</button>
+    <template v-slot:default="sheetObject">
+      <button @click="renderExcelAndDownload(sheetObject)">Download Excel</button>
     </template>
   </SheetJsOutput>
 </template>
@@ -41,8 +41,7 @@ const dataset = [
   { name: 'Bob', birthday: '2000-03-04' },
 ]
 
-function renderExcelAndDownload(arrayOfData) {
-  const worksheet = XLSX.utils.aoa_to_sheet(arrayOfData);
+function renderExcelAndDownload(worksheet) {
   const workbook = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
@@ -50,6 +49,12 @@ function renderExcelAndDownload(arrayOfData) {
 }
 </script>
 ```
+
+Result:
+
+![image](https://github.com/user-attachments/assets/6a948a97-2e5d-4dba-aaf5-40c73ba542cb)
+
+
 
 ## Quick API documentation
 
