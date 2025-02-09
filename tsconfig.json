@@ -5,6 +5,15 @@
         "types": [
             "node",
             "jest"
-        ]
-    }
+        ],
+        "outDir": "./dist",
+        "moduleResolution": "node"
+    },
+    "include": [
+        "src/**/*.ts",
+        "index.d.ts"
+    ],
+    "exclude": [
+        "src/**/*.test.ts"
+    ]
 }
