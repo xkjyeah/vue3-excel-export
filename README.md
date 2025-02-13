@@ -257,7 +257,9 @@ Cons:
 
 ## Q&A
 
-**Why not introduce custom components, instead of introducing new, invalid DOM elements?**
+### Why not introduce custom components, instead of introducing new, invalid DOM elements?
+
+**Option 1: parse children**
 
 I could have use custom components like so:
 
@@ -290,10 +292,19 @@ where
 
 because SheetJsOutput would be looking for **immediate children** that are instances of ExcelRow, not a custom element like TwoCurrencies.
 
-**Do we have to implement XOM-manipulation?**
+**Option 2: use lifecycle hooks to add/remove rows**
 
-In `renderer.ts` I implemented lots of custom object model (XOM) manipulation methods like `patchProp`, `insert`, `remove` etc. which isn't strictly necessary.
+This is the mechanism by which vue3-google-maps (and vue2-google-maps) inserted elements to the Google Maps layer without resorting to a custom document object model (XDOM).
 
-We could really just parse VNodes directly, e.g. `vnode.children.map(x => { if (x.type === 'row') { ... } })`. However implementing an XOM allows for a bit nicer type readability and safety (observe all the types defined in the same file). With a little bit more effort, I could even define the known attributes like `width` and `z` on the types themselves.
+Unfortunately, this worked only because on a Map, the **order of appearance** of child elements does not matter. That is, it doesn't matter that Marker A is inserted before or after Marker B, as long as both markers appear on the map.
+In a spreadsheet though, the order of elements do matter -- you don't want your revenue items appearing after the "Expenses" heading. Worse, it's possible that child elements are re-ordered without any lifecycle hooks being called, e.g. `v-for="r in sortBy(rows, sortField)"`, if we change `sortField`, none of the child elements will be torn down, but the order of appearance should be changed. There is also no information telling us at what index a custom element is being rendered.
+
+Thus, using lifecycle hooks is not a feasible option where sequence of elements matters to the custom object model.
+
+### Do we have to implement XDOM-manipulation?
+
+In `renderer.ts` I implemented lots of custom document object model (XDOM) manipulation methods like `patchProp`, `insert`, `remove` etc. which isn't strictly necessary.
+
+We could really just parse VNodes directly, e.g. `vnode.children.map(x => { if (x.type === 'row') { ... } })`. However implementing an XDOM allows for a bit nicer type readability and safety (observe all the types defined in the same file). With a little bit more effort, I could even define the known attributes like `width` and `z` on the types themselves.
 
 On the other hand if we had parsed VNodes directly, all the types and attributes would have been implicit in the parsing method, resulting in code that's harder to read and understand.
