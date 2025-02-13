@@ -255,3 +255,45 @@ Pros:
 Cons:
 - We end up duplicating the "presentation code". However, this is still far better than the previous solution, because we keep both the Excel and HTML parts in the "presentation" section with similar syntax, so we can copy and paste code between parts if necessary.
 
+## Q&A
+
+**Why not introduce custom components, instead of introducing new, invalid DOM elements?**
+
+I could have use custom components like so:
+
+```html
+<template>
+  <SheetJsOutput>
+    <ExcelRow>
+      <ExcelTextCell>
+```
+
+However, these components would still have to be compiled into a VDOM node. So, what would the template of the `ExcelRow` component be? If it were empty, it'd still result in an empty child VNode. If it weren't empty, it'd either have to be DOM-targeting, or target some other object model.
+
+Could we have tried parsing the children directly, like how [react-export-excel](https://github.com/rdcalle/react-export-excel/blob/5ede0a82492563f9219ba8d53cda406c22811347/src/ExcelPlugin/components/ExcelFile.js#L23-L28) does it? Firstly, Vue 3 doesn't offer access to `$children`. Secondly, even if it did, this is shifts the responsibility of parsing from Vue to the component. If the component dictates a certain structure of elements inside its slot / children, then it prevents users from using custom components to extract repeating elements out of their spreadsheet.
+
+For example, this wouldn't be possible:
+
+```html
+<SheetJsOutput>
+  <TwoCurrencies :currencies="['usd', 'jpy']" v-for="entry in entries" :data="entry" />
+```
+
+where
+```html
+<!-- TwoCurrencies.vue -->
+<ExcelRow v-for="currency in currencies">
+  <ExcelNumberCell>{{ convert(data.amount, currency) }}</ExcelNumberCell>
+  <ExcelTextCell>{{ currency }}</ExcelTextCell>
+</ExcelRow>
+```
+
+because SheetJsOutput would be looking for **immediate children** that are instances of ExcelRow, not a custom element like TwoCurrencies.
+
+**Do we have to implement XOM-manipulation?**
+
+In `renderer.ts` I implemented lots of custom object model (XOM) manipulation methods like `patchProp`, `insert`, `remove` etc. which isn't strictly necessary.
+
+We could really just parse VNodes directly, e.g. `vnode.children.map(x => { if (x.type === 'row') { ... } })`. However implementing an XOM allows for a bit nicer type readability and safety (observe all the types defined in the same file). With a little bit more effort, I could even define the known attributes like `width` and `z` on the types themselves.
+
+On the other hand if we had parsed VNodes directly, all the types and attributes would have been implicit in the parsing method, resulting in code that's harder to read and understand.
